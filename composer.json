@@ -1,0 +1,19 @@
+{
+    "name": "pfinal/session",
+    "description": "The PFinal Session package.",
+    "license": "MIT",
+    "homepage": "http://www.pfinal.cn",
+    "authors": [
+        {
+            "name": "Zou Yiliang"
+        }
+    ],
+    "require": {
+        "php": ">=5.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "PFinal\\Session\\": "src/"
+        }
+    }
+}
