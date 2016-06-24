@@ -15,9 +15,7 @@ class NativeSession implements SessionInterface
     public function __construct($config = array())
     {
         foreach ($config as $key => $value) {
-            if (isset($this->$key)) {
-                $this->$key = $value;
-            }
+            $this->$key = $value;
         }
     }
 
