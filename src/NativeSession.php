@@ -9,8 +9,8 @@ namespace PFinal\Session;
  */
 class NativeSession implements SessionInterface
 {
-    protected $prefix = 'pfinal.session.';
-    protected $flashPrefix = 'flash.';
+    protected $keyPrefix = 'pfinal.session.';
+    protected $flashKeyPrefix = 'flash.';
 
     public function __construct($config = array())
     {
@@ -38,7 +38,7 @@ class NativeSession implements SessionInterface
      */
     private function generateUniqueKey($key)
     {
-        return $this->prefix . $key;
+        return $this->keyPrefix . $key;
     }
 
     /**
@@ -92,7 +92,7 @@ class NativeSession implements SessionInterface
     {
         $this->start();
         foreach ($_SESSION as $key => $value) {
-            if (strpos($key, $this->prefix) === 0) {
+            if (strpos($key, $this->keyPrefix) === 0) {
                 unset($_SESSION[$key]);
             }
         }
@@ -106,7 +106,7 @@ class NativeSession implements SessionInterface
     public function setFlash($key, $value)
     {
         $this->start();
-        $key = $this->generateUniqueKey($this->flashPrefix . $key);
+        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
         $_SESSION[$key] = $value;
     }
 
@@ -118,7 +118,7 @@ class NativeSession implements SessionInterface
     public function hasFlash($key)
     {
         $this->start();
-        $key = $this->generateUniqueKey($this->flashPrefix . $key);
+        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
         return isset($_SESSION[$key]);
     }
 
@@ -131,7 +131,7 @@ class NativeSession implements SessionInterface
     public function getFlash($key, $defaultValue = null)
     {
         $this->start();
-        $key = $this->generateUniqueKey($this->flashPrefix . $key);
+        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
         if (array_key_exists($key, $_SESSION)) {
             $value = $_SESSION[$key];
             unset($_SESSION[$key]);
