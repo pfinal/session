@@ -15,6 +15,7 @@ class RedisSession implements SessionInterface
     protected $keyPrefix = 'pfinal.session.';
     protected $flashKeyPrefix = 'flash.';
     protected $expire = 3600;//秒
+    protected $server;
 
     /**
      * @var \Predis\Client
@@ -36,11 +37,16 @@ class RedisSession implements SessionInterface
     private function start()
     {
         if (!$this->redis instanceof \Predis\Client) {
-            $params = [
-                'scheme' => 'tcp',
-                'host' => '127.0.0.1',
-                'port' => 6379,
-            ];
+
+            if (empty($this->server)) {
+                $params = [
+                    'scheme' => 'tcp',
+                    'host' => '127.0.0.1',
+                    'port' => 6379,
+                ];
+            } else {
+                $params = $this->server;
+            }
 
             $this->redis = new \Predis\Client($params);
         }
