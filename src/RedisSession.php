@@ -25,9 +25,7 @@ class RedisSession implements SessionInterface
     public function __construct($config = array())
     {
         foreach ($config as $key => $value) {
-            if (isset($this->$key)) {
-                $this->$key = $value;
-            }
+            $this->$key = $value;
         }
     }
 
@@ -36,6 +34,9 @@ class RedisSession implements SessionInterface
      */
     private function start()
     {
+        if (!isset($_SESSION)) {
+            session_start();
+        }
         if (!$this->redis instanceof \Predis\Client) {
 
             if (empty($this->server)) {
@@ -59,7 +60,8 @@ class RedisSession implements SessionInterface
      */
     private function generateUniqueKey($key)
     {
-        return $this->keyPrefix . $key;
+        $key = session_id() . '.' . $this->keyPrefix . $key;
+        return $key;
     }
 
     /**
@@ -70,9 +72,10 @@ class RedisSession implements SessionInterface
      */
     public function set($key, $value)
     {
+
         $this->start();
         /** @var  $status \Predis\Response\Status */
-        $status = $this->redis->setex($this->generateUniqueKey($key), $this->expire, $value);
+        $status = $this->redis->setex($this->generateUniqueKey($key), $this->expire, serialize($value));
         return $status->getPayload() == 'OK';
     }
 
@@ -88,7 +91,7 @@ class RedisSession implements SessionInterface
         $key = $this->generateUniqueKey($key);
 
         if ($this->redis->exists($key)) {
-            return $this->redis->get($key);
+            return unserialize($this->redis->get($key));
         }
         return $defaultValue;
     }
@@ -137,7 +140,7 @@ class RedisSession implements SessionInterface
         $this->start();
         $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
         /** @var  $status \Predis\Response\Status */
-        $status = $this->redis->setex($key, $this->expire, $value);
+        $status = $this->redis->setex($key, $this->expire, serialize($value));
         return $status->getPayload() == 'OK';
     }
 
@@ -167,7 +170,7 @@ class RedisSession implements SessionInterface
         if ($this->redis->exists($key)) {
             $value = $this->redis->get($key);
             $this->redis->del($key);
-            return $value;
+            return unserialize($value);
         }
         return $defaultValue;
     }
