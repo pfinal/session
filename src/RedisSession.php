@@ -60,8 +60,7 @@ class RedisSession implements SessionInterface
      */
     private function generateUniqueKey($key)
     {
-        $key = session_id() . '.' . $this->keyPrefix . $key;
-        return $key;
+        return $this->keyPrefix . session_id() . $key;
     }
 
     /**
@@ -72,7 +71,6 @@ class RedisSession implements SessionInterface
      */
     public function set($key, $value)
     {
-
         $this->start();
         /** @var  $status \Predis\Response\Status */
         $status = $this->redis->setex($this->generateUniqueKey($key), $this->expire, serialize($value));
@@ -121,8 +119,7 @@ class RedisSession implements SessionInterface
     public function clear()
     {
         $this->start();
-
-        $keys = $this->redis->keys($this->keyPrefix . '*');
+        $keys = $this->redis->keys($this->generateUniqueKey('*'));
         foreach ($keys as $key) {
             $this->redis->del($key);
         }
