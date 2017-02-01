@@ -10,8 +10,8 @@ namespace PFinal\Session;
  */
 class NativeSession implements SessionInterface
 {
-    protected $keyPrefix = 'pfinal.session.';
-    protected $flashKeyPrefix = 'flash.';
+    protected $keyPrefix = 'pfinal:session:';
+    protected $flashKeyPrefix = 'flash:';
 
     public function __construct($config = array())
     {

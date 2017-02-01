@@ -3,7 +3,7 @@
 namespace PFinal\Session;
 
 /**
- * Resis Session
+ * Redis Session
  *
  * composer require predis/predis
  *
