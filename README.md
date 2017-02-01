@@ -1,6 +1,6 @@
 # [Session](http://pfinal.cn)
 
-Session操作类
+PHP Session操作类，支持Redis
 
 PHP交流 QQ 群：`16455997`
 
@@ -8,25 +8,25 @@ PHP交流 QQ 群：`16455997`
 
 使用 [composer](https://getcomposer.org/)
 
-  ```shell
-  composer require "pfinal/session:~1.0"
-  ```
+```shell
+composer require pfinal/session
+```
 
-  ```php
-  <?php
+```php
+<?php
 
-  require 'vendor/autoload.php';
+require 'vendor/autoload.php';
 
-  $session = new \PFinal\Session\NativeSession();
+$session = new \PFinal\Session\NativeSession();
 
-  $session->set('name', 'Ethan');
+$session->set('name', 'Ethan');
 
-  echo $session->get('name');
+echo $session->get('name');
 
-  $session->setFlash('message', 'test');
+$session->setFlash('message', 'test');
 
-  if ($session->hasFlash('message')) {
-     echo $session->getFlash('message');
-  }
+if ($session->hasFlash('message')) {
+ echo $session->getFlash('message');
+}
 
-  ```
+```
