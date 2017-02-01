@@ -3,23 +3,21 @@
 namespace PFinal\Session;
 
 /**
- * Redis Session
+ * Resis Session
  *
- * composer require "predis/predis": "1.1"
+ * composer require predis/predis
  *
  * @author  Zou Yiliang
  * @since   1.0
  */
-class RedisSession implements SessionInterface
+class RedisSession extends NativeSession implements \SessionHandlerInterface
 {
-    protected $keyPrefix = 'pfinal.session.';
-    protected $flashKeyPrefix = 'flash.';
-    protected $expire = 3600;//秒
+    protected $keyPrefix = 'pfinal:session:';
+    protected $flashKeyPrefix = 'flash:';
+    protected $expire;// 例如3600秒
     protected $server;
 
-    /**
-     * @var \Predis\Client
-     */
+    /** @var $redis \Predis\Client */
     protected $redis;
 
     public function __construct($config = array())
@@ -27,148 +25,137 @@ class RedisSession implements SessionInterface
         foreach ($config as $key => $value) {
             $this->$key = $value;
         }
-    }
 
-    /**
-     * 开启Session
-     */
-    private function start()
-    {
-        if (!isset($_SESSION)) {
-            session_start();
-        }
-        if (!$this->redis instanceof \Predis\Client) {
-
-            if (empty($this->server)) {
-                $params = [
-                    'scheme' => 'tcp',
-                    'host' => '127.0.0.1',
-                    'port' => 6379,
-                ];
-            } else {
-                $params = $this->server;
-            }
-
-            $this->redis = new \Predis\Client($params);
-        }
-    }
-
-    /**
-     * 生成唯一的Session Key
-     * @param $key
-     * @return string
-     */
-    private function generateUniqueKey($key)
-    {
-        return $this->keyPrefix . session_id() . $key;
-    }
-
-    /**
-     * 储存数据到Session中
-     * @param string $key
-     * @param $value mixed
-     * @return bool
-     */
-    public function set($key, $value)
-    {
-        $this->start();
-        /** @var  $status \Predis\Response\Status */
-        $status = $this->redis->setex($this->generateUniqueKey($key), $this->expire, serialize($value));
-        return $status->getPayload() == 'OK';
-    }
-
-    /**
-     * 从Session中取回数据
-     * @param string $key
-     * @param null $defaultValue 如果对应key不存在时，返回此值
-     * @return mixed
-     */
-    public function get($key, $defaultValue = null)
-    {
-        $this->start();
-        $key = $this->generateUniqueKey($key);
-
-        if ($this->redis->exists($key)) {
-            return unserialize($this->redis->get($key));
-        }
-        return $defaultValue;
-    }
-
-    /**
-     * 从Session中删除该数据
-     * @param string $key
-     * @return mixed 返回被删除的数据，不存在时返回null
-     */
-    public function remove($key)
-    {
-        $this->start();
-        $key = $this->generateUniqueKey($key);
-
-        if ($this->redis->exists($key)) {
-            $value = $this->redis->get($key);
-            $this->redis->del($key);
-            return $value;
+        if ($this->expire == null) {
+            $this->expire = (int)ini_get("session.gc_maxlifetime");
         }
 
-        return null;
+        session_set_save_handler($this, true);
     }
 
     /**
-     * 清空Session中所有数据
+     * Close the session
+     * @link http://php.net/manual/en/sessionhandlerinterface.close.php
+     * @return bool <p>
+     * The return value (usually TRUE on success, FALSE on failure).
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
      */
-    public function clear()
+    public function close()
     {
-        $this->start();
-        $keys = $this->redis->keys($this->generateUniqueKey('*'));
-        foreach ($keys as $key) {
-            $this->redis->del($key);
-        }
-
         return true;
     }
 
     /**
-     * 放入闪存数据(Flash Data)到Session中
-     * @param string $key
-     * @param mixed $value
+     * Destroy a session
+     * @link http://php.net/manual/en/sessionhandlerinterface.destroy.php
+     * @param string $session_id The session ID being destroyed.
+     * @return bool <p>
+     * The return value (usually TRUE on success, FALSE on failure).
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
      */
-    public function setFlash($key, $value)
+    public function destroy($session_id)
     {
-        $this->start();
-        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
-        /** @var  $status \Predis\Response\Status */
-        $status = $this->redis->setex($key, $this->expire, serialize($value));
-        return $status->getPayload() == 'OK';
+        return true;
     }
 
     /**
-     * Session中是否存在闪存(Flash Data)数据
-     * @param string $key
-     * @return bool
+     * Cleanup old sessions
+     * @link http://php.net/manual/en/sessionhandlerinterface.gc.php
+     * @param int $maxlifetime <p>
+     * Sessions that have not updated for
+     * the last maxlifetime seconds will be removed.
+     * </p>
+     * @return bool <p>
+     * The return value (usually TRUE on success, FALSE on failure).
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
      */
-    public function hasFlash($key)
+    public function gc($maxlifetime)
     {
-        $this->start();
-        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
-        return (bool)$this->redis->exists($key);
+        return true;
     }
 
     /**
-     * 从Session中获取闪存数据(获取后该数据将从Session中被删除)
-     * @param string $key
-     * @param null $defaultValue
-     * @return mixed
+     * Initialize session
+     * @link http://php.net/manual/en/sessionhandlerinterface.open.php
+     * @param string $save_path The path where to store/retrieve the session.
+     * @param string $name The session name.
+     * @return bool <p>
+     * The return value (usually TRUE on success, FALSE on failure).
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
      */
-    public function getFlash($key, $defaultValue = null)
+    public function open($save_path, $name)
     {
-        $this->start();
-        $key = $this->generateUniqueKey($this->flashKeyPrefix . $key);
-
-        if ($this->redis->exists($key)) {
-            $value = $this->redis->get($key);
-            $this->redis->del($key);
-            return unserialize($value);
+        if (empty($this->server)) {
+            $params = array(
+                'scheme' => 'tcp',
+                'host' => '127.0.0.1',
+                'port' => 6379,
+            );
+        } else {
+            $params = $this->server;
         }
-        return $defaultValue;
+
+        if (!$this->redis instanceof \Predis\Client) {
+            $this->redis = new \Predis\Client($params);
+        }
+        return true;
+    }
+
+    /**
+     * Read session data
+     * @link http://php.net/manual/en/sessionhandlerinterface.read.php
+     * @param string $session_id The session id to read data for.
+     * @return string <p>
+     * Returns an encoded string of the read data.
+     * If nothing was read, it must return an empty string.
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
+     */
+    public function read($session_id)
+    {
+        return (string)$this->redis->get($this->generateUniqueKey($session_id));
+    }
+
+    /**
+     * Write session data
+     * @link http://php.net/manual/en/sessionhandlerinterface.write.php
+     * @param string $session_id The session id.
+     * @param string $session_data <p>
+     * The encoded session data. This data is the
+     * result of the PHP internally encoding
+     * the $_SESSION superglobal to a serialized
+     * string and passing it as this parameter.
+     * Please note sessions use an alternative serialization method.
+     * </p>
+     * @return bool <p>
+     * The return value (usually TRUE on success, FALSE on failure).
+     * Note this value is returned internally to PHP for processing.
+     * </p>
+     * @since 5.4.0
+     */
+    public function write($session_id, $session_data)
+    {
+        /** @var  $status \Predis\Response\Status */
+        $status = $this->redis->setex($this->generateUniqueKey($session_id), $this->expire, $session_data);
+        return $status->getPayload() === 'OK';
+    }
+
+    /**
+     * 生成唯一的Key
+     * @param string $key
+     * @return string
+     */
+    private function generateUniqueKey($key)
+    {
+        return $this->keyPrefix . $key;
     }
 }

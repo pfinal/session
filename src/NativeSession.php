@@ -4,6 +4,7 @@ namespace PFinal\Session;
 
 /**
  * PHP原生Session操作
+ *
  * @author  Zou Yiliang
  * @since   1.0
  */
