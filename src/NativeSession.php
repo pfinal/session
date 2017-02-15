@@ -138,4 +138,58 @@ class NativeSession implements SessionInterface
         }
         return $defaultValue;
     }
+
+    //兼容处理
+    public function put($key, $value)
+    {
+        $this->set($key, $value);
+    }
+
+    public function pull($key)
+    {
+        return $this->remove($key);
+    }
+
+    public function forget($key)
+    {
+        $this->remove($key);
+    }
+
+    public function flush()
+    {
+        $this->clear();
+    }
+
+    public function token()
+    {
+        $this->start();
+        $key = $this->generateUniqueKey(':token');
+        return static::get($key);
+    }
+
+    public function regenerateToken()
+    {
+        $this->start();
+        $key = $this->generateUniqueKey(':token');
+        $token = self::random(40);
+        $this->set($key, $token);
+        return $token;
+    }
+
+    protected function random($length = 16)
+    {
+        if (function_exists('openssl_random_pseudo_bytes')) {
+            $bytes = openssl_random_pseudo_bytes($length * 2);
+
+            if ($bytes === false) {
+                throw new \RuntimeException('Unable to generate random string.');
+            }
+
+            return substr(str_replace(array('/', '+', '='), '', base64_encode($bytes)), 0, $length);
+        }
+
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        return substr(str_shuffle(str_repeat($pool, $length)), 0, $length);
+    }
+
 }
