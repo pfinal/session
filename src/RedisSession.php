@@ -15,6 +15,13 @@ class RedisSession extends NativeSession implements \SessionHandlerInterface
     protected $keyPrefix = 'pfinal:session:';
     protected $flashKeyPrefix = 'flash:';
     protected $expire;// 例如3600秒
+
+    /*
+     $server = array(
+        'scheme' => 'tcp',
+        'host' => '127.0.0.1',
+        'port' => 6379,
+    )*/
     protected $server;
 
     /** @var $redis \Predis\Client */
