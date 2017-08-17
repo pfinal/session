@@ -11,7 +11,7 @@ namespace PFinal\Session;
 class FileSession implements SessionInterface
 {
     protected $savePath;
-    protected $expire = 3600;//秒
+    protected $expire = 3600; //秒
 
     protected $keyPrefix = '';
     protected $flashKeyPrefix = 'flash:';
