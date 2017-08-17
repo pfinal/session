@@ -50,11 +50,10 @@ class FileSession implements SessionInterface
             setcookie($this->sessionName, $this->sessionId, 0, '/');
         }
 
-
         register_shutdown_function(array($this, 'save'));
 
-        if (file_exists($this->savePath . DIRECTORY_SEPARATOR . $this->sessionId)) {
-            $data = file_get_contents($this->savePath . DIRECTORY_SEPARATOR . $this->sessionId);
+        if (file_exists($this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId)) {
+            $data = file_get_contents($this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId);
             $data = @unserialize($data);
             if (is_array($data)) {
                 $this->data = $data;
@@ -64,7 +63,7 @@ class FileSession implements SessionInterface
 
     public function save()
     {
-        file_put_contents($this->savePath . DIRECTORY_SEPARATOR . $this->sessionId, serialize($this->data), LOCK_EX);
+        file_put_contents($this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId, serialize($this->data), LOCK_EX);
 
         if (mt_rand(0, 1000000) < 100) {
             $this->gc();
