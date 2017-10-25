@@ -52,9 +52,15 @@ class FileSession implements SessionInterface
 
         register_shutdown_function(array($this, 'save'));
 
-        if (file_exists($this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId)) {
-            $data = file_get_contents($this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId);
-            $data = @unserialize($data);
+        $filename = $this->savePath . DIRECTORY_SEPARATOR . 'sess_' . $this->sessionId;
+        if (file_exists($filename)) {
+
+            //已过期
+            if (@filemtime($filename) < time() - $this->expire) {
+                return;
+            }
+
+            $data = @unserialize(file_get_contents($filename));
             if (is_array($data)) {
                 $this->data = $data;
             }
